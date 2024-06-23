@@ -1,0 +1,5 @@
+.venv
+**/*.xlsx
+**/*.odt
+**/yandex.cookie.json
+**/*.html
