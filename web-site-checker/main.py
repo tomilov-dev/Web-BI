@@ -19,13 +19,13 @@ HEADERS = {
 }
 
 
-def get_sites() -> pd.DataFrame:
-    return pd.read_excel(ROOT_DIR / "Sushi.xlsx")
+def get_sites(filename: str) -> pd.DataFrame:
+    return pd.read_excel(ROOT_DIR / filename)
 
 
 RESPONSE_TIMEOUT = aiohttp.ClientTimeout(total=18)
 PREFETCH_CHECKOUT = ["onelink.to", "bit.ly", "clck.ru", "taplink.cc", "vk.cc"]
-SEMAPHORE = asyncio.Semaphore(50)
+SEMAPHORE = asyncio.Semaphore(20)
 
 
 async def prefetch(url: str) -> str:
@@ -94,7 +94,7 @@ async def fetch_https(url):
 
 
 async def main():
-    sites_df = get_sites()
+    sites_df = get_sites("audience.xlsx")
 
     sites = sites_df[KEY]
 
@@ -106,10 +106,10 @@ async def main():
     stat_tasks = [fetch(s) for s in sites_urls]
     stats = await tqdm_asyncio.gather(*stat_tasks)
 
-    sites_df["resp_code"] = [r[0] for r in stats]
-    sites_df["html_len"] = [r[1] for r in stats]
-    sites_df["is_tilda"] = [r[2] for r in stats]
-    sites_df["resp_time"] = [r[3] for r in stats]
+    sites_df["resp_code"] = [r[0] if r is not None else None for r in stats]
+    sites_df["html_len"] = [r[1] if r is not None else None for r in stats]
+    sites_df["is_tilda"] = [r[2] if r is not None else None for r in stats]
+    sites_df["resp_time"] = [r[3] if r is not None else None for r in stats]
 
     https_fetch = [fetch_https(s) for s in sites_urls]
     https_check = await tqdm_asyncio.gather(*https_fetch)
